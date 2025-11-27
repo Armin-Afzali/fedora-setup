@@ -119,7 +119,7 @@ install_nvidia() {
         akmod-nvidia
         xorg-x11-drv-nvidia-cuda
         nvidia-settings
-        nvidia-vaapi-driver
+        libva-nvidia-driver
         libva-utils
         vdpauinfo
         vulkan
