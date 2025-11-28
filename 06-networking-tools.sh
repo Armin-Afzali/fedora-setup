@@ -241,18 +241,18 @@ install_vpn_tools() {
         curl -fsSL https://tailscale.com/install.sh | sh 2>&1 | tee -a "${LOG_FILE}" || print_warning "Failed to install Tailscale"
     fi
     
-    # Install cloudflared
-    if ! command -v cloudflared &>/dev/null; then
-        print_info "Installing cloudflared..."
-        cd /tmp
-        local cf_version=$(curl -s https://api.github.com/repos/cloudflare/cloudflared/releases/latest | grep tag_name | cut -d '"' -f 4)
-        curl -L "https://github.com/cloudflare/cloudflared/releases/download/${cf_version}/cloudflared-linux-amd64.rpm" -o cloudflared.rpm 2>&1 | tee -a "${LOG_FILE}"
-        sudo dnf5 install -y ./cloudflared.rpm 2>&1 | tee -a "${LOG_FILE}"
-        rm cloudflared.rpm
-        print_success "cloudflared installed"
-    else
-        print_info "cloudflared already installed"
-    fi
+    # # Install cloudflared
+    # if ! command -v cloudflared &>/dev/null; then
+    #     print_info "Installing cloudflared..."
+    #     cd /tmp
+    #     local cf_version=$(curl -s https://api.github.com/repos/cloudflare/cloudflared/releases/latest | grep tag_name | cut -d '"' -f 4)
+    #     curl -L "https://github.com/cloudflare/cloudflared/releases/download/${cf_version}/cloudflared-linux-amd64.rpm" -o cloudflared.rpm 2>&1 | tee -a "${LOG_FILE}"
+    #     sudo dnf5 install -y ./cloudflared.rpm 2>&1 | tee -a "${LOG_FILE}"
+    #     rm cloudflared.rpm
+    #     print_success "cloudflared installed"
+    # else
+    #     print_info "cloudflared already installed"
+    # fi
     
     print_success "VPN and tunneling tools installed"
 }

@@ -161,6 +161,7 @@ EOF
     
     local packages=(
         kubectl
+        kubelet
     )
     
     for pkg in "${packages[@]}"; do

@@ -195,10 +195,10 @@ install_puppet() {
     
     if ! command -v puppet &>/dev/null; then
         print_info "Adding Puppet repository..."
-        sudo rpm -Uvh https://yum.puppet.com/puppet8-release-fedora-39.noarch.rpm 2>&1 | tee -a "${LOG_FILE}" || true
+        sudo rpm -Uvh https://yum.puppet.com/puppet8-release-fedora-33.noarch.rpm 2>&1 | tee -a "${LOG_FILE}" || true
         
         print_info "Installing Puppet..."
-        sudo dnf5 install -y puppet-agent 2>&1 | tee -a "${LOG_FILE}" || print_warning "Failed to install Puppet"
+        sudo dnf5 install -y puppet 2>&1 | tee -a "${LOG_FILE}" || print_warning "Failed to install Puppet"
         
         # Add puppet to PATH
         if [[ -d /opt/puppetlabs/bin ]]; then

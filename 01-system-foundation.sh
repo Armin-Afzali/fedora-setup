@@ -3,8 +3,6 @@
 #############################################
 # Fedora 43 Setup - System Foundation
 # Description: NVIDIA drivers, core graphics, system utilities
-# Author: DevOps Setup Script
-# Date: 2025
 #############################################
 
 set -euo pipefail
@@ -114,17 +112,26 @@ install_nvidia() {
     fi
     
     print_header "Installing NVIDIA Drivers and Tools"
+
+    # Add NVIDIA Container Toolkit repo first (for GPU containers)
+    if [ ! -f /etc/yum.repos.d/nvidia-container-toolkit.repo ]; then
+        print_info "Adding NVIDIA Container Toolkit repo..."
+        curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+    fi
+
+    if [ ! -f /etc/yum.repos.d/cuda-fedora42.repo ]; then
+        print_info "Adding NVIDIA CUDA repo for cuDNN..."
+        sudo dnf5 config-manager addrepo --from-repofile=https://developer.download.nvidia.com/compute/cuda/repos/fedora42/$(uname -m)/cuda-fedora42.repo
+        sudo dnf config-manager setopt cuda-fedora42-$(uname -m).exclude=nvidia-driver,nvidia-modprobe,nvidia-persistenced,nvidia-settings,nvidia-libXNVCtrl,nvidia-xconfig
+    fi
     
     local packages=(
         akmod-nvidia
-        xorg-x11-drv-nvidia-cuda
+        cuda-toolkit xorg-x11-drv-nvidia-cuda
         nvidia-settings
         libva-nvidia-driver
-        libva-utils
-        vdpauinfo
-        vulkan
-        vulkan-loader
-        vulkan-tools
+        vulkan vulkan-loader vulkan-tools
+        libva-utils vdpauinfo
     )
     
     print_info "Installing NVIDIA packages..."
@@ -136,9 +143,62 @@ install_nvidia() {
             print_info "$pkg already installed"
         fi
     done
+
+    # if ! rpm -q nvidia-container-toolkit &>/dev/null; then
+    #     print_info "Installing NVIDIA Container Toolkit"
+        
+    #     # Install with version pinning
+    #     print_info "Installing versioned NVIDIA Container Toolkit packages..."
+    #     sudo dnf5 install -y --nogpgcheck \
+    #         "nvidia-container-toolkit" \
+    #         "nvidia-container-toolkit-base" \
+    #         "libnvidia-container-tools" \
+    #         "libnvidia-container1" \
+    #         2>&1 | tee -a "${LOG_FILE}"
+        
+    #     print_success "NVIDIA Container Toolkit installed"
+    # else
+    #     print_info "NVIDIA Container Toolkit already installed"
+    # fi
+
+    # print_info "Configuring NVIDIA Container Toolkit for running containers"
+
+    # if command -v docker >/dev/null 2>&1 && systemctl is-active --quiet docker; then
+    #     # Docker is installed and active → configure for Docker
+    #     print_info "Docker detected → configuring NVIDIA runtime for Docker"
+    #     sudo nvidia-ctk runtime configure --runtime=docker
+    #     sudo systemctl restart docker
+    #     print_success "NVIDIA runtime configured for Docker"
+
+    # elif systemctl is-active --quiet containerd; then
+    #     # containerd is running (default for Podman on Fedora)
+    #     print_info "containerd detected (Podman) → configuring NVIDIA runtime"
+    #     sudo nvidia-ctk runtime configure --runtime=containerd
+    #     sudo systemctl restart containerd
+    #     print_success "NVIDIA runtime configured for Podman/containerd"
+
+    # else
+    #     print_warning "Neither Docker nor containerd service found – skipping runtime configuration"
+    #     print_info "You can manually run one of these later:"
+    #     echo "   sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker"
+    #     echo "   sudo nvidia-ctk runtime configure --runtime=containerd && sudo systemctl restart containerd"
+    # fi
+   
+    # Optional cuDNN/CUDA (uncomment if AI/ML needed)
+    if ! rpm -q cuda-cudnn &>/dev/null; then
+        print_info "Installing cuDNN (AI/ML accel)..."
+        sudo dnf5 install -y cuda-cudnn 2>&1 | tee -a "${LOG_FILE}" || print_warning "cuDNN failed (repo may need refresh)"
+    fi
+   
+    # Full CUDA tools if repo added
+    sudo dnf5 install -y cuda 2>&1 | tee -a "${LOG_FILE}" || true
     
     print_success "NVIDIA drivers installation completed"
     print_warning "Reboot required for NVIDIA drivers to take effect"
+
+    if [ -d /sys/firmware/efi ] && mokutil --sb-state 2>/dev/null | grep -q "enabled"; then
+        print_warning "Secure Boot detected – expect MOK enrollment screen on first reboot"
+    fi
 }
 
 # Install system utilities
@@ -163,6 +223,7 @@ install_system_utilities() {
         util-linux
         sysstat
         procps-ng
+        gwe
     )
     
     print_info "Installing system utilities..."
@@ -189,10 +250,25 @@ configure_dnf() {
     
     print_info "Adding DNF optimizations..."
     
-    # Add configurations if not present
-    sudo grep -q "^max_parallel_downloads=" "$dnf_conf" || echo "max_parallel_downloads=10" | sudo tee -a "$dnf_conf"
-    sudo grep -q "^fastestmirror=" "$dnf_conf" || echo "fastestmirror=True" | sudo tee -a "$dnf_conf"
-    sudo grep -q "^deltarpm=" "$dnf_conf" || echo "deltarpm=True" | sudo tee -a "$dnf_conf"
+    local settings=(
+        "max_parallel_downloads=20"
+        "fastestmirror=True"
+        "deltarpm=True"
+        "skip_if_unavailable=True"
+        "keepcache=True"
+        "install_weak_deps=False"
+    )
+   
+    for setting in "${settings[@]}"; do
+        local key="${setting%%=*}"
+        if ! sudo grep -q "^${key}=" "$dnf_conf"; then
+            echo "$setting" | sudo tee -a "$dnf_conf" > /dev/null
+            print_info "Added $setting"
+        fi
+    done
+   
+    # Enable fastestmirror plugin explicitly
+    sudo dnf5 install -y dnf-plugins-core 2>/dev/null || true
     
     print_success "DNF configuration optimized"
 }

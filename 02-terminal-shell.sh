@@ -3,8 +3,6 @@
 #############################################
 # Fedora 43 Setup - Terminal & Shell Environment
 # Description: Terminal emulators, shell enhancements, CLI tools
-# Author: DevOps Setup Script
-# Date: 2025
 #############################################
 
 set -euo pipefail
@@ -84,8 +82,8 @@ install_terminals() {
     print_header "Installing Terminal Emulators"
     
     local packages=(
-        alacritty
         kitty
+        alacritty
     )
     
     for pkg in "${packages[@]}"; do
@@ -149,12 +147,16 @@ install_modern_cli() {
     print_header "Installing Modern CLI Tools"
     
     local packages=(
-        bat
-        fd-find
-        ripgrep
-        fzf
-        zoxide
+        bat 
+        fd-find 
+        ripgrep 
+        fzf 
+        zoxide 
         thefuck
+        duf 
+        dust 
+        btop 
+        tealdeer
     )
     
     for pkg in "${packages[@]}"; do
@@ -181,7 +183,7 @@ install_rust_tools() {
     
     # Tools to install via cargo
     local cargo_tools=(
-        exa
+        eza
         starship
         mcfly
     )
@@ -237,33 +239,12 @@ configure_starship() {
         if [[ ! -f "${HOME}/.config/starship.toml" ]]; then
             print_info "Creating Starship configuration..."
             mkdir -p "${HOME}/.config"
-            starship preset nerd-font-symbols -o "${HOME}/.config/starship.toml" 2>&1 | tee -a "${LOG_FILE}"
+            starship preset gruvbox-rainbow -o "${HOME}/.config/starship.toml" 2>&1 | tee -a "${LOG_FILE}"
             print_success "Starship configured"
         else
             print_info "Starship already configured"
         fi
     fi
-}
-
-# Install additional utilities
-install_utilities() {
-    print_header "Installing Additional CLI Utilities"
-    
-    # Install tldr via npm if available, otherwise via dnf
-    if command -v npm &>/dev/null; then
-        if ! command -v tldr &>/dev/null; then
-            print_info "Installing tldr via npm..."
-            npm install -g tldr 2>&1 | tee -a "${LOG_FILE}" || print_warning "Failed to install tldr"
-        fi
-    else
-        if ! rpm -q tldr &>/dev/null; then
-            print_info "Installing tldr-py..."
-            sudo dnf5 install -y python3-pip 2>&1 | tee -a "${LOG_FILE}"
-            pip3 install --user tldr 2>&1 | tee -a "${LOG_FILE}" || print_warning "Failed to install tldr"
-        fi
-    fi
-    
-    print_success "Additional utilities installed"
 }
 
 # Create shell configurations
@@ -273,35 +254,32 @@ create_shell_configs() {
     local config_file="${HOME}/.fedora-setup-shell-config.txt"
     
     cat > "$config_file" <<'EOF'
-# Shell Configuration Suggestions
-# Add these to your .zshrc or .bashrc as needed
+# Recommended ~/.zshrc additions
 
-# Starship prompt (add to end of .zshrc or .bashrc)
-eval "$(starship init zsh)"  # for zsh
-# eval "$(starship init bash)"  # for bash
+eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
+eval "$(atuin init zsh)"
+eval "$(mcfly init zsh)"
 
-# Zoxide (smarter cd)
-eval "$(zoxide init zsh)"  # for zsh
-# eval "$(zoxide init bash)"  # for bash
+# eza (better ls)
+alias ls='eza --icons --group-directories-first'
+alias ll='eza -l --icons'
+alias la='eza -la --icons'
+alias tree='eza --tree --level=3 --icons'
 
-# McFly (shell history)
-eval "$(mcfly init zsh)"  # for zsh
-# eval "$(mcfly init bash)"  # for bash
-
-# FZF key bindings
-[ -f /usr/share/fzf/shell/key-bindings.zsh ] && source /usr/share/fzf/shell/key-bindings.zsh
-
-# Aliases for modern tools
-alias ls='exa'
-alias ll='exa -l'
-alias la='exa -la'
-alias cat='bat'
+# Modern replacements
+alias cat='bat --style=plain'
 alias find='fd'
 alias grep='rg'
+alias ps='btop'
+alias du='dust'
+alias df='duf'
 
-# Oh My Zsh plugins recommendation
-# Edit ~/.zshrc and update plugins line:
-# plugins=(git docker kubectl terraform ansible zsh-autosuggestions zsh-syntax-highlighting)
+# FZF
+source /usr/share/fzf/shell/key-bindings.zsh 2>/dev/null || true
+
+# Recommended Oh My Zsh plugins line:
+# plugins=(git docker kubectl helm terraform ansible zsh-autosuggestions zsh-syntax-highlighting)
 
 EOF
     
@@ -324,7 +302,6 @@ main() {
     install_rust_tools
     install_oh_my_zsh
     configure_starship
-    install_utilities
     create_shell_configs
     
     print_header "Installation Summary"
