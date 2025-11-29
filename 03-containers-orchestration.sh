@@ -110,7 +110,7 @@ install_docker() {
     # Add Docker repository
     if [[ ! -f /etc/yum.repos.d/docker-ce.repo ]]; then
         print_info "Adding Docker repository..."
-        sudo dnf5 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo 2>&1 | tee -a "${LOG_FILE}"
+        sudo dnf5 config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo 2>&1 | tee -a "${LOG_FILE}"
     fi
     
     local packages=(

@@ -152,7 +152,7 @@ install_dns_tools() {
     if ! command -v consul &>/dev/null; then
         print_info "Installing Consul..."
         if [[ ! -f /etc/yum.repos.d/hashicorp.repo ]]; then
-            sudo dnf5 config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
+            sudo dnf5 config-manager addrepo --from-repofile=https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
         fi
         sudo dnf5 install -y consul 2>&1 | tee -a "${LOG_FILE}" || print_warning "Failed to install consul"
     fi

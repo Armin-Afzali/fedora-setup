@@ -80,7 +80,7 @@ install_vault() {
         print_info "Installing Vault from HashiCorp repository..."
         
         if [[ ! -f /etc/yum.repos.d/hashicorp.repo ]]; then
-            sudo dnf5 config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
+            sudo dnf5 config-manager addrepo --from-repofile=https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
         fi
         
         sudo dnf5 install -y vault 2>&1 | tee -a "${LOG_FILE}"

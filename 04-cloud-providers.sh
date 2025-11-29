@@ -179,7 +179,7 @@ install_terraform() {
     
     if ! command -v terraform &>/dev/null; then
         print_info "Adding HashiCorp repository..."
-        sudo dnf5 config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
+        sudo dnf5 config-manager addrepo --from-repofile=https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
         
         print_info "Installing Terraform..."
         sudo dnf5 install -y terraform 2>&1 | tee -a "${LOG_FILE}"

@@ -109,7 +109,7 @@ install_packer() {
         
         # HashiCorp repo should be added already, but check
         if [[ ! -f /etc/yum.repos.d/hashicorp.repo ]]; then
-            sudo dnf5 config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
+            sudo dnf5 config-manager addrepo --from-repofile=https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
         fi
         
         sudo dnf5 install -y packer 2>&1 | tee -a "${LOG_FILE}"
@@ -127,7 +127,7 @@ install_vagrant() {
         print_info "Installing Vagrant from HashiCorp repository..."
         
         if [[ ! -f /etc/yum.repos.d/hashicorp.repo ]]; then
-            sudo dnf5 config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
+            sudo dnf5 config-manager addrepo --from-repofile=https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 2>&1 | tee -a "${LOG_FILE}"
         fi
         
         sudo dnf5 install -y vagrant 2>&1 | tee -a "${LOG_FILE}"
